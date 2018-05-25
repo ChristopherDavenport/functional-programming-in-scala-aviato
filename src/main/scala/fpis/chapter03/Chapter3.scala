@@ -80,7 +80,7 @@ object Chapter3 {
       * Exercise 3.6
       **/
     def init[A](l: MList[A]): MList[A] =
-      reverse(tail(reverse(l)))
+      reverseHelper(tail(reverseHelper(l)))
 
 
     def foldRight[A, B](as: MList[A], z: B)(f: (A, B) => B): B =
@@ -118,12 +118,96 @@ object Chapter3 {
         case MCons(x, xs) => foldLeft(xs, f(z, x))(f)
       }
 
+    /**
+      * Exercise 3.11 - Write sum, product, and a function to compute the length of a list using foldLeft.
+      **/
+
+    def sumFL(as: MList[Int]): Int = foldLeft(as, 0)(_ + _)
+    def productFL(as: MList[Int]): Int = foldLeft(as, 1)(_ * _)
+
+    /**
+      * Exercise 3.12 - Write a function that returns the reverse of a list (given List(1,2,3) it returns List(3,2,1)). 
+      * See if you can write it using a fold.         
+      */
+    def reverse[A](as: MList[A]): MList[A] = foldLeft(as, MList.empty[A])((l, h) => MList.cons(h, l))
+
+    /**
+      * Exercise 3.13 - Hard: Can you write foldLeft in terms of foldRight? 
+      * How about the other way around? 
+      * Implementing foldRight via foldLeft is useful because it lets us implement foldRight tail-recursively, 
+      * which means it works even for large lists without overflowing the stack.         
+      */
+    def foldLeftViaFoldRight[A, B](as: MList[A], z: B)(f: (B, A) => B): B = 
+      foldRight(reverseHelper(as), z)((a, b) => f(b, a))
+
+    def foldRightViaFoldLeft[A, B](as: MList[A], z: B)(f: (A, B) => B): B = 
+      foldLeft(reverse(as), z)((b, a) => f(a, b))
+
+    /**
+      * Exercise 3.14 - Implement append in terms of either foldLeft or foldRight.
+      */ 
+    def append[A](as: MList[A], bs: MList[A]): MList[A] = 
+      foldRightViaFoldLeft(as, bs)(MList.cons)
+
+    /**
+      * Exercise 3.15 - Hard: Write a function that concatenates a list of lists into a single list. 
+      * Its runtime should be linear in the total length of all lists. 
+      * Try to use functions we have already defined.         
+      */
+    def flatten[A](as: MList[MList[A]]): MList[A] =
+      foldRightViaFoldLeft(as, MList.empty[A])(append)
+      
+
+    /**
+      * Exercise 3.16 - Write a function that transforms a list of integers by adding 1 to each element. 
+      * (Reminder: this should be a pure function that returns a new List!)         
+      */
+    def addOne(as: MList[Int]): MList[Int] = 
+      foldRightViaFoldLeft(as, MList.empty[Int])((h, t) => MList.cons(h+1, t))
     
+    /**
+      * Exercise 3.17 - Write a function that turns each value in a List[Double] into a String. 
+      * You can use the expression d.toString to convert some d: Double to a String.         
+      */
+    def convertDoubleToString(as: MList[Double]): MList[String] =
+      foldRightViaFoldLeft(as, MList.empty[String])((h, t) => MList.cons(h.toString, t))
+
+
+    /**
+      * Exercise 3.18 - Write a function map that generalizes 
+      * modifying each element in a list while maintaining the structure of the list.
+      */
+    def map[A,B](as: MList[A])(f: A => B): MList[B] = 
+      foldRightViaFoldLeft(as, MList.empty[B])((h, t) => MList.cons(f(h), t))
+
+    /**
+      * Exercise 3.19 - Write a function filter 
+      * that removes elements from a list unless they satisfy a given predicate. 
+      * Use it to remove all odd numbers from a List[Int].
+      */
+    def filter[A](as: MList[A])(f: A => Boolean): MList[A] = 
+      foldRightViaFoldLeft(as, MList.empty[A])((h, t) => if(f(h)) MList.cons(h, t) else t)
+
+    def evenNumbers(as: MList[Int]): MList[Int] = filter(as)(_ % 2 == 0)
+
+    /**
+      * Exercise 3.20 - Write a function flatMap that works like map 
+      * except that the function given will return a list instead of a single result, 
+      * and that list should be inserted into the final resulting list. 
+      */
+    def flatMap[A, B](as: MList[A])(f: A => MList[B]): MList[B] = 
+      foldRightViaFoldLeft(as, MList.empty[B])((a, b) => append(f(a), b))
+
+    /**
+      * Exercise 3.21 - Use flatMap to implement filter
+      */
+    def filterViaFlatMap[A](as: MList[A])(f: A => Boolean): MList[A] = 
+      flatMap(as)(a => if (f(a)) MList(a) else MList.empty[A])
 
     /**
       * Helpers
       **/
-    def reverse[A](l: MList[A]): MList[A] = {
+    def reverseHelper[A](l: MList[A]): MList[A] = {
       @tailrec
       def recurse(l: MList[A], acc: MList[A]): MList[A] = l match {
         case MNil => acc
