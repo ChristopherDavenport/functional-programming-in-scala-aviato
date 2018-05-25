@@ -79,7 +79,8 @@ object Chapter3 {
     /**
       * Exercise 3.6
       **/
-    def init[A](l: MList[A]): MList[A] = reverse(tail(reverse(l)))
+    def init[A](l: MList[A]): MList[A] =
+      reverse(tail(reverse(l)))
 
 
     def foldRight[A, B](as: MList[A], z: B)(f: (A, B) => B): B =
@@ -117,6 +118,7 @@ object Chapter3 {
         case MCons(x, xs) => foldLeft(xs, f(z, x))(f)
       }
 
+    
 
     /**
       * Helpers
