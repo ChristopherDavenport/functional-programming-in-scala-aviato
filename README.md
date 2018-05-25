@@ -1,2 +1,1 @@
-# functional-programming-in-scala-aviato
-
+# functional-programming-in-scala-aviato [![Build Status](https://travis-ci.com/ChristopherDavenport/functional-programming-in-scala-aviato.svg?branch=master)](https://travis-ci.com/ChristopherDavenport/functional-programming-in-scala-aviato)
