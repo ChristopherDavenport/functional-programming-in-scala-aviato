@@ -82,6 +82,42 @@ object Chapter3 {
     def init[A](l: MList[A]): MList[A] = reverse(tail(reverse(l)))
 
 
+    def foldRight[A, B](as: MList[A], z: B)(f: (A, B) => B): B =
+      as match {
+        case MNil => z
+        case MCons(x, xs) => f(x, foldRight(xs, z)(f))
+      }
+
+
+    /**
+      * Exercise 3.7 - No Foldright can't be implemented which can terminate early, as the function
+      * Needs to be passed down the whole of the list.
+      **/
+
+
+
+    /**
+      * Exercise 3.8 - foldRight is analagous to cons and nil
+      **/
+    def recreateList[A](as: MList[A]) = foldRight[A, MList[A]](as, MList.empty[A])(MList.cons)
+
+    /**
+      * Exercise 3.9 - Implement Length Via Foldright
+      **/
+    def length[A](as: MList[A]) = foldRight[A, Int](as, 0)((_, acc) => acc + 1)
+
+
+    /**
+      * Exercise 3.10
+      **/
+    @tailrec
+    def foldLeft[A, B](as: MList[A], z: B)(f: (B, A) => B): B = 
+      as match {
+        case MNil => z
+        case MCons(x, xs) => foldLeft(xs, f(z, x))(f)
+      }
+
+
     /**
       * Helpers
       **/
@@ -93,21 +129,6 @@ object Chapter3 {
       }
       recurse(l, MList.empty[A])
     }
-
-    def foldRight[A, B](as: MList[A], z: B)(f: (A, B) => B): B =
-      as match {
-        case MNil => z
-        case MCons(x, xs) => f(x, foldRight(xs, z)(f))
-      }
-
-    @tailrec
-    def foldLeft[A, B](as: MList[A], z: B)(f: (B, A) => B): B = 
-      as match {
-        case MNil => z
-        case MCons(x, xs) => foldLeft(xs, f(z, x))(f)
-      }
-    
-
 
   }
 
