@@ -100,13 +100,14 @@ object Chapter3 {
     /**
       * Exercise 3.8 - foldRight is analagous to cons and nil
       **/
-    def recreateList[A](as: MList[A]) = foldRight[A, MList[A]](as, MList.empty[A])(MList.cons)
+    def recreateList[A](as: MList[A]) = 
+      foldRight[A, MList[A]](as, MList.empty[A])(MList.cons)
 
     /**
       * Exercise 3.9 - Implement Length Via Foldright
       **/
-    def length[A](as: MList[A]) = foldRight[A, Int](as, 0)((_, acc) => acc + 1)
-
+    def length[A](as: MList[A]) = 
+      foldRight[A, Int](as, 0)((_, acc) => acc + 1)
 
     /**
       * Exercise 3.10
@@ -124,12 +125,14 @@ object Chapter3 {
 
     def sumFL(as: MList[Int]): Int = foldLeft(as, 0)(_ + _)
     def productFL(as: MList[Int]): Int = foldLeft(as, 1)(_ * _)
+    def lengthFL[A](as: MList[A]): Int = foldLeft(as, 0)((b, _) => b + 1)
 
     /**
       * Exercise 3.12 - Write a function that returns the reverse of a list (given List(1,2,3) it returns List(3,2,1)). 
       * See if you can write it using a fold.         
       */
-    def reverse[A](as: MList[A]): MList[A] = foldLeft(as, MList.empty[A])((l, h) => MList.cons(h, l))
+    def reverse[A](as: MList[A]): MList[A] = 
+      foldLeft(as, MList.empty[A])((l, h) => MList.cons(h, l))
 
     /**
       * Exercise 3.13 - Hard: Can you write foldLeft in terms of foldRight? 
@@ -146,8 +149,11 @@ object Chapter3 {
     /**
       * Exercise 3.14 - Implement append in terms of either foldLeft or foldRight.
       */ 
-    def append[A](as: MList[A], bs: MList[A]): MList[A] = 
+    def concat[A](as: MList[A], bs: MList[A]): MList[A] = 
       foldRightViaFoldLeft(as, bs)(MList.cons)
+
+    def append[A](as: MList[A], a: A): MList[A] = 
+      concat(as, MList(a))
 
     /**
       * Exercise 3.15 - Hard: Write a function that concatenates a list of lists into a single list. 
@@ -155,8 +161,25 @@ object Chapter3 {
       * Try to use functions we have already defined.         
       */
     def flatten[A](as: MList[MList[A]]): MList[A] =
-      foldRightViaFoldLeft(as, MList.empty[A])(append)
-      
+      foldRightViaFoldLeft(as, MList.empty[A])(concat)
+
+    def deconstructedFlatten[A](as: MList[MList[A]]): MList[A] = {
+      def myreverse[B](as: MList[B]): MList[B] = 
+        myfoldLeft(as, MList.empty[B])((l, h) => MList.cons(h, l))
+      def myfoldLeft[C, B](as: MList[C], z: B)(f: (B, C) => B): B = {
+        as match {
+          case MNil => z
+          case MCons(x, xs) => myfoldLeft(xs, f(z, x))(f)
+        }
+      }
+      def myfoldRightViaFoldLeft[C, B](as: MList[C], z: B)(f: (C, B) => B): B = {
+        myfoldLeft(reverse(as), z)((b, a) => f(a, b))
+      }
+      def myconcat[C](as: MList[C], bs: MList[C]): MList[C] = 
+        myfoldRightViaFoldLeft(as, bs)(MList.cons)
+      myfoldLeft(myreverse(as), MList.empty[A])((b, a) => myconcat(a, b))
+    }
+
 
     /**
       * Exercise 3.16 - Write a function that transforms a list of integers by adding 1 to each element. 
@@ -196,7 +219,7 @@ object Chapter3 {
       * and that list should be inserted into the final resulting list. 
       */
     def flatMap[A, B](as: MList[A])(f: A => MList[B]): MList[B] = 
-      foldRightViaFoldLeft(as, MList.empty[B])((a, b) => append(f(a), b))
+      foldRightViaFoldLeft(as, MList.empty[B])((a, b) => concat(f(a), b))
 
     /**
       * Exercise 3.21 - Use flatMap to implement filter
