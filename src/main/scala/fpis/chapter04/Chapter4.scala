@@ -23,6 +23,9 @@ object Chapter4 {
   object MOption{
     def some[A](a: A): MOption[A] = MSome(a)
     def none[A]: MOption[A] = MNone
+    def catchThrowable[A](a: => A): MOption[A] = 
+      try { MOption.some(a) } catch { case _: Exception => MOption.none[A] }
+    def lift[A,B](f: A => B): MOption[A] => MOption[B] = map(_)(f)
 
     def fold[A, B](ma: MOption[A])(ifNone: => B)(ifSome: A => B): B = ma match {
       case MSome(a) => ifSome(a)
@@ -34,10 +37,6 @@ object Chapter4 {
     def orElse[A](ma: MOption[A])(mb: => MOption[A]): MOption[A] = fold(ma)(mb)(MOption.some)
     def select[A](ma: MOption[A])(f: A => Boolean): MOption[A] = fold(ma)(MOption.none[A])(a => if (f(a)) MOption.some(a) else MOption.none)
     def filter[A](ma: MOption[A])(f: A => Boolean): MOption[A] = select(ma)(f)
-
-    def lift[A,B](f: A => B): MOption[A] => MOption[B] = map(_)(f)
-    def catchThrowable[A](a: => A): MOption[A] = 
-      try { MOption.some(a) } catch { case _: Exception => MOption.none[A] }
 
     def map2[A,B, C](ma: MOption[A], mb: MOption[B])(f: (A, B) => C): MOption[C] = 
       flatMap(ma)(a => map(mb)(b => f(a,b)))
