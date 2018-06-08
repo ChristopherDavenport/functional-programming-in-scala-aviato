@@ -87,15 +87,40 @@ object Chapter4 {
   //     fb
   //   )
   // )
-  
-
-
-
-
-
   def mena2(xs: List[Double]): MOption[Double] = ???
   
   final case class ParseError(throwable: Throwable)
   def mean3(xs: List[Double]): Either[ParseError, Double] = ???
+
+  sealed trait MEither[E, A]
+  object MEither {
+    def left[E, A](e: E): MEither[E, A] = MLeft[E,A](e)
+    def right[E, A](a: A): MEither[E, A] = MRight[E, A](a)
+    def catchException[A](a: => A): MEither[Exception, A] = 
+      try {right(a)} catch { case e: Exception => left(e)}
+
+    def fold[E, A, B](ma: MEither[E,A])(first: E => B)(second: A => B): B = ma match {
+      case MLeft(e) => first(e)
+      case MRight(a) => second(a)
+    }
+    def map[E,A, B](ma: MEither[E, A])(f: A => B): MEither[E, B] = fold(ma)(left[E,B])(a => right(f(a)))
+    def flatMap[E, A, B](ma: MEither[E, A])(f: A => MEither[E, B]) = fold(ma)(left[E, B])(f)
+    def orElse[E,A](ma: MEither[E, A])(mb: => MEither[E, A]): MEither[E, A] = fold(ma)(_ => mb)(right)
+    def map2[E, A, B, C](ma: MEither[E, A])(mb: MEither[E, B])(f: (A, B) => C): MEither[E, C] = 
+      fold(ma)(left[E,C])(a => fold(mb)(left[E, C])(b => right(f(a, b))))
+
+    def traverse[E, A, B](ma: List[A])(f: A => MEither[E, B]): MEither[E, List[B]] = 
+      ma.foldRight(MEither.right[E, List[B]](List.empty[B])){ case (next, acc) => flatMap(acc)(l => map(f(next))(b => b :: l))}
+
+    def sequence[E, A](ma: List[MEither[E, A]]): MEither[E, List[A]] = traverse(ma)(identity)
+
+    // Exercise 4.8
+    // Would need to not have a flatMap such that errors on the left could be combined. Such that E semigroup
+    // combines values of e on each iteration of map2
+
+    private final case class MRight[E, A](a: A) extends MEither[E, A]
+    private final case class MLeft[E, A](e: E) extends MEither[E, A]
+  }
+
 
 }
