@@ -1,5 +1,7 @@
 package fpis.chapter04
 
+import scala.util.control.NonFatal
+
 object Chapter4 {
   // Domain
   // Codomain
@@ -19,12 +21,20 @@ object Chapter4 {
   //   if (denominator == 0) ???
   //   else BigDecimal(numerator/denominator)
 
-  sealed trait MOption[+A]
+  sealed trait MOption[+A]{}
   object MOption{
     def some[A](a: A): MOption[A] = MSome(a)
     def none[A]: MOption[A] = MNone
+
+    def catchNull[A](a: => A): MOption[A] = 
+      if (a == null) MOption.none[A]
+      else MOption.some(a)
+
     def catchThrowable[A](a: => A): MOption[A] = 
-      try { MOption.some(a) } catch { case _: Exception => MOption.none[A] }
+      try { MOption.some(a) } catch { case NonFatal(_) => MOption.none[A] }
+    
+    def safe[A](a: => A): MOption[A] = flatMap(catchThrowable(a))(a => catchNull[A](a))
+
     def lift[A,B](f: A => B): MOption[A] => MOption[B] = map(_)(f)
 
     def fold[A, B](ma: MOption[A])(ifNone: => B)(ifSome: A => B): B = ma match {
@@ -42,10 +52,14 @@ object Chapter4 {
       flatMap(ma)(a => map(mb)(b => f(a,b)))
 
     def sequence[A](xa: List[MOption[A]]): MOption[List[A]] = 
-      xa.foldRight(MOption.some(List.empty[A])){case (next, acc) => flatMap(acc)(l => map(next)(a => a::l))}
+      xa.foldRight(MOption.some(List.empty[A])){case (next, acc) => 
+        flatMap(acc)(l => map(next)(a => a::l))
+      }
 
     def traverse[A, B](xa: List[A])(f: A => MOption[B]): MOption[List[B]] = 
-      xa.foldRight(MOption.some(List.empty[B])){case (next, acc) => flatMap(acc)(l => map(f(next))(a => a::l))}
+      xa.foldRight(MOption.some(List.empty[B])){case (next, acc) => 
+        flatMap(acc)(l => map(f(next))(a => a::l))
+      }
 
     def sequenceViaTraverse[A](xa: List[MOption[A]]): MOption[List[A]] = traverse(xa)(identity)
 
@@ -87,7 +101,7 @@ object Chapter4 {
   //     fb
   //   )
   // )
-  def mena2(xs: List[Double]): MOption[Double] = ???
+  def mean2(xs: List[Double]): MOption[Double] = ???
   
   final case class ParseError(throwable: Throwable)
   def mean3(xs: List[Double]): Either[ParseError, Double] = ???
