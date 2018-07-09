@@ -87,9 +87,12 @@ object Chapter5 {
     }
 
     def unfold[A, S](z: S)(f: S => Option[(A, S)]): MStream[A] = 
-      f(z).fold(empty[A]){ case (a, s) => cons(a, unfold(s)(f))}
+      f(z).fold(empty[A]){ case (a, s) => cons(a, unfold(s)(f)) }
 
-    def fibsViaUnfold: MStream[Int] = unfold((0, 1)){ case (lower, higher) => Some((lower, (higher, higher + lower)))}
+  
+    def fibsViaUnfold: MStream[Int] = unfold((0, 1)){ 
+      case (lower, higher) => Some((lower, (higher, higher + lower)))
+    }
 
     def constantViaUnfold[A](a: A): MStream[A] = unfold(a)(a => Some((a, a)))
     def onesViaUnfold: MStream[Int] = constantViaUnfold(1)

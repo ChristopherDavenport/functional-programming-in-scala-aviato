@@ -42,6 +42,73 @@ object Chapter4 {
       case MNone => ifNone
     }
 
+    sealed trait CEither[A, B]
+    final case class CLeft[A, B](a: A) extends CEither[A, B]
+    final case class CRight[A, B](b: B) extends CEither[A, B]
+    object CEither {
+      def left[A, B](a: A): CEither[A, B] = CLeft(a)
+      def right[A, B](b: B): CEither[A, B] = CRight(b)
+
+      def show[A, B](e: CEither[A, B]): String = e match {
+        case CLeft(a) => s"Left($a)"
+        case CRight(b) => s"Right($b)"
+      }
+      trait Show[A]{
+        def show(a: A): String
+      }
+      def cEitherShow[A, B]: Show[CEither[A, B]] = new Show[CEither[A, B]]{
+        def show(a: CEither[A, B]): String = CEither.show[A, B](a)
+      }
+
+
+      def cRightShow[A,B]: Show[CRight[A, B]] = new Show[CRight[A, B]]{
+        def show(a: CRight[A, B]): String = a match {
+          case CRight(a) => s"Right($a)"
+        }
+      }
+
+      sealed trait A1
+      case class B1() extends A1
+
+      sealed trait COption[+A]
+      case class CSome[+A](a: A) extends COption[A]
+      case object CNone extends COption[Nothing]
+
+      val bsome : COption[A1] = CSome(B1())
+
+      val a: A1 = B1()
+
+      // f (B => C) => A => C iff (A => B)
+      // f (A => C) => B => C iff (B => A)
+
+      trait C1 extends A1
+
+
+      // def cEitherShowFromCrightShow[A, B](showRight: Show[CRight[A, B]]): Show[CEither[A, B]] = new Show[]
+
+
+
+
+
+
+      // def contravariantShow : ContravariantFunctor[Show] = new ContravariantFunctor[Show]{
+      //   def map[A, B](fa: Show[A])(f: A => B): Show[B] = ???
+      // }
+
+      // def covariantShow : CovariantFunctor[Show] = ???
+
+      // trait CovariantFunctor[F[_]]{
+      //   def map[A, B](fa: F[A])(f: A => B): F[B] 
+      // }
+      // trait ContravariantFunctor[F[_]]{
+      //   def contramap[A, B](fb: F[B])(f: A => B): F[A]
+      // }
+    }
+    
+
+
+
+
     def map[A, B](ma: MOption[A])(f: A => B): MOption[B] = fold(ma)(MOption.none[B])(a => MOption.some(f(a)))
     def flatMap[A, B](ma: MOption[A])(f: A => MOption[B]): MOption[B] = fold(ma)(MOption.none[B])(f)
     def getOrElse[A](ma: MOption[A])(default: A): A = fold(ma)(default)(identity)
