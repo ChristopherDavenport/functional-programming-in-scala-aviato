@@ -1,29 +1,20 @@
 package fpis
 
-// import fpis.chapter03.Chapter3.MList._
+import scala.io.StdIn.readLine
 
 object Main {
 
   def main(args: Array[String]): Unit = {
-    import fpis.chapter05.Nats._
+    import fpis.chapter05.Synchronicity._
 
-    // (1 to 10).toList.map(i => (i, Nat.fromInt(i))).foreach(println)
+    val program : Sync[Unit] = Sync.delay(println("Put Something useful to do"))
+    .flatMap(_ => Sync.delay{throw new Throwable("Boom!"); ""})
+    .flatMap(string => Sync.delay(readLine))
+    .recover(_ => "I recovered")
+    .flatMap(l => Sync.delay(println(s"I got: $l")))
+    
 
-    val one = Nat.fromInt(5)
-    val two = Nat.fromInt(2)
-    val something = for {
-      o <- one
-      t <- two
-      s <- Nat.subtraction(o, t)
-    } yield s
-
-
-    println(something.get)
-
-    // val i = Nat.fromInt(2)
-    // println(i)
-    // println(initList)
-    // println(initOfList)
+    Sync.unsafeRunSync(program)    
   }
 
 }

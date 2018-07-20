@@ -42,13 +42,9 @@ object Nats {
       case One => None
       case Succ(x) => Some(x)
     }
-
-    
   }
 
   final case object One extends Nat
   final case class Succ(x: Nat) extends Nat
-
-
 
 }
