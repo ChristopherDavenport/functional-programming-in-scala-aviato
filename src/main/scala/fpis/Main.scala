@@ -1,20 +1,15 @@
 package fpis
 
-import scala.io.StdIn.readLine
-
 object Main {
 
   def main(args: Array[String]): Unit = {
-    import fpis.chapter05.Synchronicity._
+    import fpis.chapter06.State._
+    import scala.concurrent.ExecutionContext.Implicits.global
 
-    val program : Sync[Unit] = Sync.delay(println("Put Something useful to do"))
-    .flatMap(_ => Sync.delay{throw new Throwable("Boom!"); ""})
-    .flatMap(string => Sync.delay(readLine))
-    .recover(_ => "I recovered")
-    .flatMap(l => Sync.delay(println(s"I got: $l")))
+    val output = simpleProgram("5")(1)
+    println(output)
     
 
-    Sync.unsafeRunSync(program)    
   }
 
 }

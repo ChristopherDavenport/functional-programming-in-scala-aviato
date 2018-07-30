@@ -86,6 +86,51 @@ object Chapter5 {
       map(fibsInt(0, 1))(_._1)
     }
 
+
+    // Write more general intitial state, next state and next value
+    // Option is used to indicate when the stream should be terminated
+    // if at all.
+    def unfoldA[A, S](z:S)(f: S => Option[(A, S)]): MStream[A] = 
+      f(z) match {
+        case Some((a, s)) => cons(a, unfoldA(s)(f))
+        case None => empty
+      }
+
+    def foldRightA[A, Z](mStream: MStream[A])(z: Z)(f: (A, Z) => Z): Z =
+      mStream match {
+        case MEmpty() => z 
+        case MCons(a, s) => 
+          f(a(), foldRightA(s())(z)(f))
+      }
+
+    case class State[S, A](fInit: S => (S, A)){
+      def flatMap[B](fFlatmap: A => State[S, B]) : State[S, B] = 
+        State{s1: S => fInit(s1) match {
+            case (s2, a) => 
+              val stateB : State[S, B] = fFlatmap(a)
+              val sTuple : (S, B) = stateB.fInit(s2)
+              sTuple
+          }
+        }
+    }
+    object State {
+      def modify[S, A](state: State[S, A])(f: S => S): State[S, A] = 
+        State{s1: S => 
+          val (s, a) = state.fInit(s1)
+          (f(s), a)
+        }
+
+      def runState[S, A](state: State[S, A])(s: S): (S, A) = 
+        state.fInit(s)
+    }
+
+    def fibsA: MStream[Int] = 
+      unfoldA((0,1)){ case (lower, higher) => 
+        val emitted: Int = lower
+        val state : (Int, Int) = (higher, lower + higher)
+        Some((emitted, state))
+      }
+
     def unfold[A, S](z: S)(f: S => Option[(A, S)]): MStream[A] = 
       f(z).fold(empty[A]){ case (a, s) => cons(a, unfold(s)(f)) }
 
