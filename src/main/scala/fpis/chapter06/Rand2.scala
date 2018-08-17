@@ -1,7 +1,7 @@
 package fpis.chapter06
 
 object Rand2 {
-  trait RNG
+  sealed trait RNG
   // trait RNG {
   //   def nextInt: (Int, RNG)
   // }
@@ -10,6 +10,12 @@ object Rand2 {
     def map2[B, C](that: Rand[B])(f: (A, B) => C) = Rand2.map2(this, that)(f)
     def flatMap[B](f: A => Rand[B]): Rand[B] = Rand2.flatMap(this)(f)
   }
+
+
+  val myRand : Rand[Int => String] = pure(_.toString)
+
+
+
 
 
   // def map[A,B](randA: Rand[A])(f: A => B): Rand[B] = 
@@ -65,6 +71,31 @@ object Rand2 {
         val finalListA : List[A] = a :: l
         val finalRNG : RNG = endRNG
         (finalListA, finalRNG)
+      }
+    }
+
+    object CoolGuy {
+      import cats.Applicative
+      import cats.Foldable
+      import cats.Alternative
+      import cats.Eval
+
+
+      def sequence[F[_]: Foldable :Alternative, G[_]: Applicative, A](fa: F[A]): G[F[A]] = 
+        Foldable[F].foldRight(fa, Eval.later(Applicative[G].pure(Alternative[F].empty[A]))){
+          case (a, evalGFA) => 
+            evalGFA.map(gfa => 
+              
+              Applicative[G].map2(Applicative[G].pure(a), gfa){ case (a, fa) => 
+                Alternative[F].combineK(Alternative[F].pure(a), fa)
+              }
+            )
+        }.value
+
+      object InternalTest {
+        import cats.implicits._
+
+        CoolGuy.sequence[List, Option, Int](List(1, 2))
       }
     }
     

@@ -16,6 +16,26 @@ object State {
         }}
 
     }
+
+    trait MyApplicative[F[_]]{
+      def map[A, B](xa: F[A])(f: A => B): F[B]
+      // def pure[A](a: A): F[A]
+      def ap[A, B](ff: F[A => B])(fa: F[A]): F[B]
+
+      def product[A,B](fa: F[A], fb: F[B]): F[(A, B)] =
+        ap(map(fa)(a => (b: B) => (a, b)))(fb)
+
+
+      // def product2[A, B](fa: F[A], fb: F[B]): F[(A, B)] =
+      //   ap(liftF[A, B, (A, B)](fa){(a, b) => (a, b)})(fb)
+      // private def liftF[A, B, C](fa: F[A])(f: (A, B) => C): F[B => C] =
+      //   map(fa)(a => {(b: B) => f(a, b)})
+
+      def map2[A, B, Z](fa: F[A], fb: F[B])(f: (A,B) => Z): F[Z] =
+        map(product(fa, fb))(f.tupled)
+
+      }
+
     object State {
       import cats.Monad
       import cats.implicits._
