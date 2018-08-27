@@ -1,6 +1,6 @@
 package fpis.chapter06
 
-object State {
+object MyState {
   case class State[S, A](fInit: S => (S, A)){
       def flatMap[B](fFlatmap: A => State[S, B]) : State[S, B] = 
         State{s1: S => fInit(s1) match {
