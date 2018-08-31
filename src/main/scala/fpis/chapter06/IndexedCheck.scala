@@ -1,7 +1,8 @@
 package fpis.chapter06
 
+import cats._
 import cats.implicits._
-import cats.data.State
+import cats.data._
 
 object IndexedCheck {
 
@@ -42,6 +43,34 @@ object IndexedCheck {
 
   def simulateInput(i: Input): State[Machine, Unit] = 
     State.modify{m: Machine => input(i, m)}
+
+  object Indexed {
+    def emptyMachine: IndexedStateT[Id, EmptyLockedMachine, EmptyLockedMachine, Unit] = IndexedStateT.modify(identity)
+    def lockedWithCoin: IndexedStateT[Id, LockedMachine, UnlockedMachine, Unit] = IndexedStateT.modify{ 
+      case LockedMachine(candies, coins) => UnlockedMachine(candies, coins +1)
+    }
+    def turnUnlocked: IndexedStateT[Id, UnlockedMachine, Machine, Unit] = IndexedStateT.modify {
+      case UnlockedMachine(candies, coins) => 
+        val newcandies = candies - 1
+        if (newcandies == 0) EmptyLockedMachine(coins)
+        else LockedMachine(newcandies, coins)
+    }
+
+    def nothingElseDoesAnything : IndexedStateT[Id, Machine, Machine, Unit] = IndexedStateT.modify(identity)
+
+    def simulateInput(i: Input): IndexedStateT[Id, Machine, Machine, Unit] = IndexedStateT.modify{
+      case e: EmptyLockedMachine => emptyMachine.runS(e)
+      case l: LockedMachine => i match {
+        case Coin => lockedWithCoin.runS(l)
+        case _ => nothingElseDoesAnything.runS(l)
+      }
+      case u: UnlockedMachine => i match {
+        case Turn => turnUnlocked.runS(u)
+        case _ => nothingElseDoesAnything.runS(u)
+      }
+    }
+  }
+
 
 
 }
